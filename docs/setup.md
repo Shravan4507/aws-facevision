@@ -12,6 +12,8 @@ This guide describes how to configure the AWS resources and local development en
 - **AWS Account ID**: `663981373457`
 - **S3 Image Bucket**: `facevision-images-663981373457-us-east-1` (Private, SSE-S3)
 - **IAM Execution Role**: `FaceVisionLambdaExecutionRole`
+- **IAM Developer User**: `facevision-developer` (Active local CLI user)
+- **IAM CI/CD User**: `github-actions-deployer` (Dedicated least-privilege deployment user)
 - **Lambda Face Counter**: `arn:aws:lambda:us-east-1:663981373457:function:facevision-face-counter`
 - **Amazon Rekognition**: `DetectFaces` API
 - **CloudWatch Log Group**: `/aws/lambda/facevision-face-counter`
