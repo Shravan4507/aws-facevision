@@ -8,6 +8,8 @@ dist/
 build/
 out/
 *.zip
+response.json
+
 
 # Python
 __pycache__/

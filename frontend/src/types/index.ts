@@ -1,4 +1,4 @@
-export type ProcessingStatus = 'SUCCESS' | 'FAILED';
+export type ProcessingStatus = 'SUCCESS' | 'FAILED' | 'PROCESSING';
 
 export interface ImageResult {
   image_id: string;
@@ -9,6 +9,7 @@ export interface ImageResult {
   face_count?: number;
   error_message?: string;
   processed_at: string;
+  preview_url?: string;
 }
 
 export interface DashboardStats {

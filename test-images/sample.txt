@@ -1,0 +1,2 @@
+This is an unsupported test file for FaceVision validation.
+When uploaded to the S3 bucket, Lambda should detect that this is not an image and ignore it without crashing.

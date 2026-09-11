@@ -12,10 +12,11 @@
       "Resource": "arn:aws:logs:*:*:*"
     },
     {
-      "Sid": "S3ReadOnlyAccess",
+      "Sid": "S3Access",
       "Effect": "Allow",
       "Action": [
-        "s3:GetObject"
+        "s3:GetObject",
+        "s3:PutObject"
       ],
       "Resource": "arn:aws:s3:::facevision-images-*/*"
     },
@@ -28,11 +29,13 @@
       "Resource": "*"
     },
     {
-      "Sid": "DynamoDBWriteAccess",
+      "Sid": "DynamoDBAccess",
       "Effect": "Allow",
       "Action": [
         "dynamodb:PutItem",
-        "dynamodb:UpdateItem"
+        "dynamodb:UpdateItem",
+        "dynamodb:GetItem",
+        "dynamodb:Scan"
       ],
       "Resource": "arn:aws:dynamodb:*:*:table/facevision-results"
     }
