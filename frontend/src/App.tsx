@@ -149,6 +149,7 @@ export const App: React.FC = () => {
                 onProcessImage={handleProcessImage}
                 isProcessing={isProcessing}
                 selectedFile={selectedFile}
+                activeResult={activeResult}
                 onSelectFile={(f) => {
                   setSelectedFile(f);
                   if (!f) setActiveResult(null);

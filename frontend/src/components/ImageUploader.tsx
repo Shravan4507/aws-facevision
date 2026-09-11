@@ -1,10 +1,12 @@
 import React, { useState, useRef } from 'react';
+import { ImageResult } from '../types/index.ts';
 
 interface ImageUploaderProps {
   onProcessImage: (file: File) => void;
   isProcessing: boolean;
   selectedFile: File | null;
   onSelectFile: (file: File | null) => void;
+  activeResult?: ImageResult | null;
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
@@ -12,6 +14,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   isProcessing,
   selectedFile,
   onSelectFile,
+  activeResult,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -112,11 +115,28 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           <div className="preview-layout">
             <div className="preview-image-well">
               {previewUrl && (
-                <img
-                  src={previewUrl}
-                  alt="Selected upload preview"
-                  className="preview-img"
-                />
+                <div className="image-overlay-container">
+                  <img
+                    src={previewUrl}
+                    alt="Selected upload preview"
+                    className="preview-img"
+                  />
+                  {activeResult?.faces?.map((face, idx) => (
+                    <div
+                      key={idx}
+                      className="face-box-overlay"
+                      style={{
+                        left: `${face.bounding_box.left * 100}%`,
+                        top: `${face.bounding_box.top * 100}%`,
+                        width: `${face.bounding_box.width * 100}%`,
+                        height: `${face.bounding_box.height * 100}%`,
+                      }}
+                      title={`Face #${idx + 1}: ${face.gender}, ${face.age_range.low}-${face.age_range.high} yrs, ${face.top_emotion.type}`}
+                    >
+                      <span className="box-badge">#{idx + 1}</span>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
 

@@ -124,6 +124,17 @@ def handle_get_stats():
     return build_response(200, stats)
 
 
+def float_to_decimal(obj):
+    """Recursively converts all float types to Decimal for DynamoDB compatibility."""
+    if isinstance(obj, float):
+        return Decimal(str(obj))
+    if isinstance(obj, dict):
+        return {k: float_to_decimal(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [float_to_decimal(v) for v in obj]
+    return obj
+
+
 def handle_post_upload(event):
     """
     Receives image upload, saves to S3 uploads/ prefix, executes Rekognition,
@@ -175,17 +186,49 @@ def handle_post_upload(event):
         ContentType='image/jpeg'
     )
 
-    # 2. Call Rekognition DetectFaces
+    # 2. Call Rekognition DetectFaces with ALL attributes
     face_count = 0
+    parsed_faces = []
     status = "SUCCESS"
     error_message = None
 
     try:
         rekog_resp = rekognition_client.detect_faces(
             Image={'Bytes': file_bytes},
-            Attributes=['DEFAULT']
+            Attributes=['ALL']
         )
-        face_count = len(rekog_resp.get('FaceDetails', []))
+        face_details = rekog_resp.get('FaceDetails', [])
+        face_count = len(face_details)
+
+        for face in face_details:
+            emotions = face.get('Emotions', [])
+            top_emotion = max(emotions, key=lambda e: e.get('Confidence', 0)) if emotions else {'Type': 'UNKNOWN', 'Confidence': 0}
+            age_range = face.get('AgeRange', {})
+            smile = face.get('Smile', {})
+            gender = face.get('Gender', {})
+            eyeglasses = face.get('Eyeglasses', {})
+            box = face.get('BoundingBox', {})
+
+            parsed_faces.append({
+                'bounding_box': {
+                    'width': round(float(box.get('Width', 0)), 4),
+                    'height': round(float(box.get('Height', 0)), 4),
+                    'left': round(float(box.get('Left', 0)), 4),
+                    'top': round(float(box.get('Top', 0)), 4),
+                },
+                'age_range': {
+                    'low': int(age_range.get('Low', 0)),
+                    'high': int(age_range.get('High', 0)),
+                },
+                'smile': bool(smile.get('Value', False)),
+                'gender': gender.get('Value', 'UNKNOWN'),
+                'eyeglasses': bool(eyeglasses.get('Value', False)),
+                'top_emotion': {
+                    'type': top_emotion.get('Type', 'UNKNOWN'),
+                    'confidence': round(float(top_emotion.get('Confidence', 0)), 1)
+                }
+            })
+
     except Exception as exc:
         status = "FAILED"
         error_message = str(exc)
@@ -198,12 +241,13 @@ def handle_post_upload(event):
         's3_key': s3_key,
         'bucket_name': S3_BUCKET_NAME,
         'face_count': face_count,
+        'faces': parsed_faces,
         'status': status,
         'processed_at': timestamp_iso
     }
     if error_message:
         record['error_message'] = error_message
 
-    table.put_item(Item=record)
+    table.put_item(Item=float_to_decimal(record))
 
     return build_response(200, record)

@@ -1,0 +1,45 @@
+name: Deploy Lambdas to AWS
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+    paths:
+      - 'backend/lambda/**'
+      - '.github/workflows/deploy-lambda.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Package & Deploy Lambdas
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Deploy facevision-face-counter
+        run: |
+          cd backend/lambda/face_counter
+          zip -j function.zip lambda_function.py
+          aws lambda update-function-code \
+            --function-name facevision-face-counter \
+            --zip-file fileb://function.zip \
+            --region us-east-1
+
+      - name: Deploy facevision-api-handler
+        run: |
+          cd backend/lambda/api_handler
+          zip -j api_handler.zip lambda_function.py
+          aws lambda update-function-code \
+            --function-name facevision-api-handler \
+            --zip-file fileb://api_handler.zip \
+            --region us-east-1

@@ -725,3 +725,104 @@ body {
   padding: 6px 12px 12px 12px;
   text-align: center;
 }
+
+/* Bounding Box Overlays on Preview Image */
+.image-overlay-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.face-box-overlay {
+  position: absolute;
+  border: 2px solid #00ff66;
+  box-shadow: 0 0 6px rgba(0, 255, 102, 0.8), inset 0 0 4px rgba(0, 255, 102, 0.3);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.box-badge {
+  position: absolute;
+  top: -14px;
+  left: -2px;
+  background-color: #000000;
+  color: #00ff66;
+  font-family: var(--win95-mono);
+  font-size: 10px;
+  font-weight: bold;
+  padding: 0 3px;
+  border: 1px solid #00ff66;
+  line-height: 1.1;
+}
+
+/* Facial Attribute Telemetry Diagnostics */
+.telemetry-box {
+  background: #ffffff;
+  border: 2px solid;
+  border-color: #808080 #ffffff #ffffff #808080;
+  margin-top: 4px;
+}
+
+.telemetry-header {
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #ffffff;
+  padding: 3px 6px;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+.telemetry-list {
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.telemetry-card {
+  background-color: #f9f9f9;
+  border: 1px dotted #808080;
+  padding: 4px 6px;
+}
+
+.telemetry-card-title {
+  font-size: 11px;
+  color: #000080;
+}
+
+.telemetry-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 3px;
+}
+
+.telemetry-tag {
+  font-size: 10px;
+  padding: 1px 5px;
+  border: 1px solid #c0c0c0;
+  background: #ffffff;
+  border-radius: 2px;
+}
+
+.tag-emotion {
+  background-color: #e6f0ff;
+  border-color: #000080;
+  color: #000080;
+}
+
+.tag-yes {
+  background-color: #d4edda;
+  border-color: #28a745;
+  color: #155724;
+  font-weight: bold;
+}
+
+.tag-no {
+  background-color: #f8f9fa;
+  color: #606060;
+}

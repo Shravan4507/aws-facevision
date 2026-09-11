@@ -74,6 +74,35 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, isProcessi
               </div>
             )}
           </div>
+
+          {/* Facial Attribute Telemetry (Emotions, Age, Smile) */}
+          {result.faces && result.faces.length > 0 && (
+            <div className="telemetry-box">
+              <div className="telemetry-header">
+                <span>⚡ Facial Attribute Telemetry ({result.faces.length} {result.faces.length === 1 ? 'subject' : 'subjects'})</span>
+              </div>
+              <div className="telemetry-list">
+                {result.faces.map((face, index) => (
+                  <div key={index} className="telemetry-card">
+                    <div className="telemetry-card-title">
+                      <strong>Subject #{index + 1}:</strong> {face.gender} ({face.age_range.low}–{face.age_range.high} yrs)
+                    </div>
+                    <div className="telemetry-metrics">
+                      <span className="telemetry-tag tag-emotion">
+                        Emotion: <strong>{face.top_emotion.type}</strong> ({face.top_emotion.confidence}%)
+                      </span>
+                      <span className={`telemetry-tag ${face.smile ? 'tag-yes' : 'tag-no'}`}>
+                        Smile: {face.smile ? 'YES ✓' : 'NO'}
+                      </span>
+                      <span className="telemetry-tag">
+                        Glasses: {face.eyeglasses ? 'YES' : 'NO'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </fieldset>

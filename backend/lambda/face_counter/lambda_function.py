@@ -68,7 +68,7 @@ def lambda_handler(event, context):
         try:
             logger.info("Calling Amazon Rekognition DetectFaces for s3://%s/%s", bucket_name, object_key)
 
-            # Call Rekognition DetectFaces directly referencing S3 object
+            # Call Rekognition DetectFaces with ALL facial attributes
             response = rekognition_client.detect_faces(
                 Image={
                     'S3Object': {
@@ -76,11 +76,42 @@ def lambda_handler(event, context):
                         'Name': object_key
                     }
                 },
-                Attributes=['DEFAULT']
+                Attributes=['ALL']
             )
 
             face_details = response.get('FaceDetails', [])
             face_count = len(face_details)
+
+            # Parse rich facial telemetry (Emotions, Age, Smile, BoundingBox)
+            parsed_faces = []
+            for face in face_details:
+                emotions = face.get('Emotions', [])
+                top_emotion = max(emotions, key=lambda e: e.get('Confidence', 0)) if emotions else {'Type': 'UNKNOWN', 'Confidence': 0}
+                age_range = face.get('AgeRange', {})
+                smile = face.get('Smile', {})
+                gender = face.get('Gender', {})
+                eyeglasses = face.get('Eyeglasses', {})
+                box = face.get('BoundingBox', {})
+
+                parsed_faces.append({
+                    'bounding_box': {
+                        'width': round(float(box.get('Width', 0)), 4),
+                        'height': round(float(box.get('Height', 0)), 4),
+                        'left': round(float(box.get('Left', 0)), 4),
+                        'top': round(float(box.get('Top', 0)), 4),
+                    },
+                    'age_range': {
+                        'low': int(age_range.get('Low', 0)),
+                        'high': int(age_range.get('High', 0)),
+                    },
+                    'smile': bool(smile.get('Value', False)),
+                    'gender': gender.get('Value', 'UNKNOWN'),
+                    'eyeglasses': bool(eyeglasses.get('Value', False)),
+                    'top_emotion': {
+                        'type': top_emotion.get('Type', 'UNKNOWN'),
+                        'confidence': round(float(top_emotion.get('Confidence', 0)), 1)
+                    }
+                })
 
             # Log formatted output to CloudWatch
             log_structured_output(
@@ -91,13 +122,14 @@ def lambda_handler(event, context):
                 processed_at=timestamp_iso
             )
 
-            # Persist record in DynamoDB
+            # Persist record in DynamoDB with telemetry
             item_record = {
                 'image_id': f"{object_key}#{int(datetime.now(timezone.utc).timestamp())}",
                 'image_name': image_name,
                 's3_key': object_key,
                 'bucket_name': bucket_name,
                 'face_count': face_count,
+                'faces': parsed_faces,
                 'status': 'SUCCESS',
                 'processed_at': timestamp_iso
             }
@@ -191,16 +223,29 @@ def log_structured_output(bucket_name, image_key, status, faces_count, processed
     logger.info("\n".join(lines))
 
 
+from decimal import Decimal
+
+
+def float_to_decimal(obj):
+    """Recursively converts all float types to Decimal for DynamoDB compatibility."""
+    if isinstance(obj, float):
+        return Decimal(str(obj))
+    if isinstance(obj, dict):
+        return {k: float_to_decimal(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [float_to_decimal(v) for v in obj]
+    return obj
+
+
 def save_to_dynamodb(item):
     """
     Saves an image processing record to DynamoDB table if available.
     """
     try:
         table = dynamodb.Table(DYNAMODB_TABLE_NAME)
-        table.put_item(Item=item)
+        table.put_item(Item=float_to_decimal(item))
         logger.info("Successfully recorded item %s in DynamoDB table %s", item.get('image_id'), DYNAMODB_TABLE_NAME)
     except ClientError as err:
-        # If DynamoDB table is not yet created (Stage A), log and continue gracefully
         logger.warning("Could not write to DynamoDB table '%s': %s", DYNAMODB_TABLE_NAME, err.response.get('Error', {}).get('Message', str(err)))
     except Exception as exc:
         logger.warning("DynamoDB save skipped: %s", str(exc))
